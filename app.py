@@ -63,7 +63,7 @@ def login():
 
         else: 
             if bcrypt.check_password_hash(user.password_hash, password):
-                return jsonify({'customer_id': user.id})
+                return jsonify({'id': user.id,'name': user.name})
             else:
                 return jsonify({'error': 'Invalid Credentials', 'customer_id': 0})
 
@@ -75,11 +75,11 @@ def get_customer_accounts(customer_id):
     customer = Customer.query.get(customer_id)
     
     if not customer:
-        return jsonify({'message': 'Customer not found'}), 404
+        return jsonify({'message': 'Customer not found'})
 
-    accounts = [{'account_type': account.account_type, 'account_number': account.account_number, 'account_balance': account.balance} for account in customer.accounts]
+    accounts = [{'account_id': account.id, 'account_type': account.account_type, 'account_number': account.account_number, 'account_balance': account.balance} for account in customer.accounts]
 
-    group_by_account_type = {key: list(group) for key, group in groupby(accounts, key=lambda acc: acc['account_type'])}
+    group_by_account_type = [list(group)[0] for key, group in groupby(accounts, key=lambda acc: acc['account_type'])]
 
     return jsonify(group_by_account_type)
 
@@ -87,26 +87,31 @@ def get_customer_accounts(customer_id):
 @app.route("/account/<account_id>/transactions", methods=['GET'])
 def get_transactions(account_id):
     # Get optional query parameters for filtering
-    print(request.args.to_dict())
     min_amount = request.args.get('min_amount', type=float)
     max_amount = request.args.get('max_amount', type=float)
 
-    min_date = request.args.get('min_date', type=lambda x: datetime.strptime(x, '%Y-%m-%d'))
-    max_date = request.args.get('max_date', type=lambda x: datetime.strptime(x, '%Y-%m-%d'))
+    min_date = request.args.get('min_date', type=lambda x: datetime.strptime(x, '%Y/%m/%d'))
+    max_date = request.args.get('max_date', type=lambda x: datetime.strptime(x, '%Y/%m/%d'))
+
+
+    keyword = request.args.get('keyword', type=str)
 
     account = BankAccount.query.get(account_id)
 
     filtered_transactions = []
 
     if not account:
-        return jsonify({'message': 'Account not found'}), 404
+        return jsonify({'message': 'Account not found'})
 
     db_transactions = Transaction.query.filter_by(account_id=account_id).all()
 
     filtered_transactions = [
         {
+            'id': transaction.id,
             'amount': transaction.amount,
+            'current_balance': transaction.current_balance,
             'type': transaction.transaction_type,
+            'desc': transaction.transaction_desc,
             'timestamp': transaction.timestamp
         }
         for transaction in db_transactions
@@ -114,11 +119,12 @@ def get_transactions(account_id):
                 (min_date is None or transaction.timestamp >= min_date) and
                 (max_date is None or transaction.timestamp <= max_date) and
                 (min_amount is None or transaction.amount >= min_amount) and
-                (max_amount is None or transaction.amount <= max_amount)
+                (max_amount is None or transaction.amount <= max_amount) and
+                (keyword is None or keyword.lower() in transaction.transaction_desc.lower())
             )
     ]
 
-    return jsonify(filtered_transactions)
+    return jsonify(sorted(filtered_transactions, key=lambda t: t['id'], reverse=True))
 
 
 @app.route('/transfer', methods=['POST'])
@@ -127,25 +133,26 @@ def transfer_amount():
 
     from_account_number = data.get('from_account_number')
     to_account_number = data.get('to_account_number')
-    amount = data.get('amount')
+    amount = float(data.get('amount'))
 
     # Retrieve accounts from the database
     from_account = BankAccount.query.filter_by(account_number=from_account_number).first()
     to_account = BankAccount.query.filter_by(account_number=to_account_number).first()
 
+
     if not from_account or not to_account:
-        return jsonify({'message': 'One or both accounts not found'}), 404
+        return jsonify({'message': 'One or both accounts not found'})
 
     if from_account.balance < amount:
-        return jsonify({'message': 'Insufficient funds for transfer'}), 400
+        return jsonify({'message': 'Insufficient funds for transfer'})
 
     # Perform the transfer
     from_account.balance -= amount
     to_account.balance += amount
 
     # Record transactions for both accounts
-    from_transaction = Transaction(amount=amount, transaction_type='withdrawal', account_id=from_account.id)
-    to_transaction = Transaction(amount=amount, transaction_type='deposit', account_id=to_account.id)
+    from_transaction = Transaction(amount=amount, transaction_type='debit', transaction_desc=f"Deposit to Acc: {from_account.account_type.capitalize()}-{to_account_number[-4:]}", current_balance=from_account.balance,account_id=from_account.id)
+    to_transaction = Transaction(amount=amount, transaction_type='credit', transaction_desc=f"Deposit from Acc: {to_account.account_type.capitalize()}-{from_account_number[-4:]}", current_balance=to_account.balance, account_id=to_account.id)
 
     db.session.add_all([from_transaction, to_transaction])
     db.session.commit()
@@ -156,13 +163,18 @@ def transfer_amount():
 @app.route("/generate_test_data", methods=['GET'])
 def generate_test_data():
     acc_type = ['checking', 'savings']
-    transaction_type = ['deposit', 'withdrawal']
 
     for idx in range(1, 3):
         customer_name = f'customer_{idx}'
         email = f'{customer_name}@test.com'
         username = f'{customer_name}-11'
         password = f'{customer_name}-pass'
+
+        transaction_type_desc = {
+                    "debit": ["Online Purchase", "Grocery Shopping", "Utility Bill Payment", "Withdrawal"],
+                    "credit": ["Salary Deposit", "Refund", "Bonus"]
+                }
+
         password_hash = generate_password_hash(password)
         customer = Customer(name=customer_name, email=email, username=username, password_hash=password_hash)
         db.session.add(customer)
@@ -171,28 +183,39 @@ def generate_test_data():
         for idx in range(2):
             account_number = BankAccount.generate_random_account_number()
             balance = random.uniform(20, 50)
-            print('Initial Balance: ', balance)
             account = BankAccount(account_number=account_number, account_type=acc_type[idx], account_balance=balance, customer_id=customer.id)
             db.session.add(account)
             db.session.commit()
 
+            transaction = Transaction(amount=balance, transaction_type='credit', transaction_desc='Initial Balance', current_balance=balance, account_id=account.id)
+            db.session.add(transaction)
+
             # Generate random transactions
             for idx in range(5):
                 amount = random.uniform(1, 100)
-                transaction_type_val = transaction_type[random.randint(0, 1)]
 
-                if transaction_type_val == 'deposit':
-                    account.deposit(amount)
+                transaction_type = list(transaction_type_desc.keys())[random.randint(0, 1)]
 
-                if transaction_type_val == 'withdrawal':
-                    account.withdraw(amount)
+                transaction_type_count =len(transaction_type_desc[transaction_type]) - 1
+
+                transaction_desc = transaction_type_desc[transaction_type][random.randint(0, transaction_type_count)]
+
+                if transaction_type == 'credit':
+                    account.deposit(amount, transaction_desc)
+
+                if transaction_type == 'debit':
+                    account.withdraw(amount, transaction_desc)
 
     # Update time for transactions to past dates for testing purposes
     transactions = Transaction.query.all()
-    
-    for transaction in transactions:
-        timestamp = datetime.now() - timedelta(days=random.randint(1, 30))
+
+    n = len(transactions)
+
+    for idx, transaction in enumerate(transactions):
+        timestamp = datetime.now() - timedelta(days=n)
         transaction.timestamp = timestamp
+        if idx % 2 == 0:
+            n -= 1
 
     db.session.commit()
     return jsonify({"success": True})

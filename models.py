@@ -25,7 +25,6 @@ class BankAccount(db.Model):
     account_number = Column(String(20), unique=True, nullable=False)
     balance = Column(db.Float(precision=2), default=0)
     account_type = Column(String(20), nullable=False)
-
     customer_id = Column(Integer, ForeignKey('customers.id'), nullable=False)
     customer = relationship('Customer', back_populates='accounts')
     transactions = relationship('Transaction', back_populates='account')
@@ -38,23 +37,23 @@ class BankAccount(db.Model):
         self.customer_id = customer_id
 
 
-    def deposit(self, amount):
+    def deposit(self, amount, transaction_desc):
         self.balance += amount
-        transaction = Transaction(amount=amount, transaction_type='deposit', account_id=self.id)
+        transaction = Transaction(amount=amount, transaction_type='credit', transaction_desc=transaction_desc, current_balance=self.balance, account_id=self.id)
         db.session.add(transaction)
         db.session.commit()
-        return f'Deposit successful. New balance: {self.balance}'
+        return f'Transaction successful. New balance: {self.balance}'
 
 
-    def withdraw(self, amount):
+    def withdraw(self, amount, transaction_desc):
         if amount > self.balance:
             return 'Insufficient funds. Withdrawal unsuccessful.'
         else:
             self.balance -= amount
-            transaction = Transaction(amount=amount, transaction_type='withdrawal', account_id=self.id)
+            transaction = Transaction(amount=amount, transaction_type='debit', transaction_desc=transaction_desc, current_balance=self.balance, account_id=self.id)
             db.session.add(transaction)
             db.session.commit()
-            return f'Withdrawal successful. New balance: {self.balance}'
+            return f'Transaction successful. New balance: {self.balance}'
 
 
     def generate_random_account_number():
@@ -67,7 +66,8 @@ class Transaction(db.Model):
     id = Column(Integer, primary_key=True)
     amount = Column(db.Float(precision=2), nullable=False)
     transaction_type = Column(String(20), nullable=False)
+    transaction_desc = Column(String(555550), nullable=False)
     timestamp = Column(DateTime, default=db.func.current_timestamp(), nullable=False)
-
+    current_balance = Column(db.Float(precision=2), default=0)
     account_id = Column(Integer, ForeignKey('bank_accounts.id'), nullable=False)
     account = relationship('BankAccount', back_populates='transactions')
