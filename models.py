@@ -66,7 +66,7 @@ class Transaction(db.Model):
     id = Column(Integer, primary_key=True)
     amount = Column(db.Float(precision=2), nullable=False)
     transaction_type = Column(String(20), nullable=False)
-    transaction_desc = Column(String(555550), nullable=False)
+    transaction_desc = Column(String(50), nullable=False)
     timestamp = Column(DateTime, default=db.func.current_timestamp(), nullable=False)
     current_balance = Column(db.Float(precision=2), default=0)
     account_id = Column(Integer, ForeignKey('bank_accounts.id'), nullable=False)

@@ -163,12 +163,13 @@ def transfer_amount():
 @app.route("/generate_test_data", methods=['GET'])
 def generate_test_data():
     acc_type = ['checking', 'savings']
+    customer_name = ['John Mayo', 'Lynn Loring']
 
     for idx in range(1, 3):
-        customer_name = f'customer_{idx}'
-        email = f'{customer_name}@test.com'
-        username = f'{customer_name}-11'
-        password = f'{customer_name}-pass'
+        name = customer_name[idx-1]
+        email = f"{'.'.join(name.split(' '))}@test.com"
+        username = f'sa-{idx}'
+        password = f'sa-{idx}'
 
         transaction_type_desc = {
                     "debit": ["Online Purchase", "Grocery Shopping", "Utility Bill Payment", "Withdrawal"],
@@ -176,7 +177,7 @@ def generate_test_data():
                 }
 
         password_hash = generate_password_hash(password)
-        customer = Customer(name=customer_name, email=email, username=username, password_hash=password_hash)
+        customer = Customer(name=name, email=email, username=username, password_hash=password_hash)
         db.session.add(customer)
         db.session.commit()
 
@@ -209,13 +210,13 @@ def generate_test_data():
     # Update time for transactions to past dates for testing purposes
     transactions = Transaction.query.all()
 
-    n = len(transactions)
+    time_travel = len(transactions)
 
     for idx, transaction in enumerate(transactions):
-        timestamp = datetime.now() - timedelta(days=n)
+        timestamp = datetime.now() - timedelta(days=time_travel)
         transaction.timestamp = timestamp
         if idx % 2 == 0:
-            n -= 1
+            time_travel -= 1
 
     db.session.commit()
     return jsonify({"success": True})
