@@ -77,9 +77,23 @@ def get_customer_accounts(customer_id):
     if not customer:
         return jsonify({'message': 'Customer not found'})
 
-    accounts = [{'account_id': account.id, 'account_type': account.account_type, 'account_number': account.account_number, 'account_balance': account.balance} for account in customer.accounts]
+    accounts = [
+                {
+                'account_id': account.id,
+                'account_type': account.account_type,
+                'account_number': account.account_number,
+                'account_balance': account.balance
+                } 
+                for account in customer.accounts
+            ]
 
-    group_by_account_type = [list(group)[0] for key, group in groupby(accounts, key=lambda acc: acc['account_type'])]
+    group_by_account_type = [
+                        list(group)[0]
+                        for key, group in groupby(
+                                            accounts,
+                                            key=lambda acc: acc['account_type']
+                                            )
+                        ]
 
     return jsonify(group_by_account_type)
 
@@ -151,13 +165,30 @@ def transfer_amount():
     to_account.balance += amount
 
     # Record transactions for both accounts
-    from_transaction = Transaction(amount=amount, transaction_type='debit', transaction_desc=f"Deposit to Acc: {from_account.account_type.capitalize()}-{to_account_number[-4:]}", current_balance=from_account.balance,account_id=from_account.id)
-    to_transaction = Transaction(amount=amount, transaction_type='credit', transaction_desc=f"Deposit from Acc: {to_account.account_type.capitalize()}-{from_account_number[-4:]}", current_balance=to_account.balance, account_id=to_account.id)
+    from_transaction = Transaction(
+                                amount=amount,
+                                transaction_type='debit',
+                                transaction_desc=f"Deposit to Acc. {from_account.account_type.capitalize()}-{to_account_number[-4:]}",
+                                current_balance=from_account.balance,
+                                account_id=from_account.id
+                                )
+
+    to_transaction = Transaction(
+                            amount=amount,
+                            transaction_type='credit',
+                            transaction_desc=f"Deposit from Acc. {to_account.account_type.capitalize()}-{from_account_number[-4:]}",
+                            current_balance=to_account.balance,
+                            account_id=to_account.id
+                            )
 
     db.session.add_all([from_transaction, to_transaction])
     db.session.commit()
 
-    return jsonify({'message': 'Transfer successful', 'from_account_balance': from_account.balance, 'to_account_balance': to_account.balance})
+    return jsonify({
+                'message': 'Transfer successful',
+                'from_account_balance': from_account.balance,
+                'to_account_balance': to_account.balance
+                })
 
 
 @app.route("/generate_test_data", methods=['GET'])
@@ -184,11 +215,24 @@ def generate_test_data():
         for idx in range(2):
             account_number = BankAccount.generate_random_account_number()
             balance = random.uniform(20, 50)
-            account = BankAccount(account_number=account_number, account_type=acc_type[idx], account_balance=balance, customer_id=customer.id)
+            account = BankAccount(
+                            account_number=account_number,
+                            account_type=acc_type[idx],
+                            account_balance=balance,
+                            customer_id=customer.id
+                            )
+
             db.session.add(account)
             db.session.commit()
 
-            transaction = Transaction(amount=balance, transaction_type='credit', transaction_desc='Initial Balance', current_balance=balance, account_id=account.id)
+            transaction = Transaction(
+                    amount=balance,
+                    transaction_type='credit',
+                    transaction_desc='Initial Balance',
+                    current_balance=balance,
+                    account_id=account.id
+                    )
+
             db.session.add(transaction)
 
             # Generate random transactions

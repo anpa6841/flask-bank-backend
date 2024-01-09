@@ -1,19 +1,19 @@
-### Flask Bank Backend
+## Flask Bank Backend
 
-## Setup 
+### Setup 
 
-## Create virtual env and install depdendencies
+### Create virtual env and install depdendencies
 
 - python3 -m venv myvenv
 - source myvenv/bin/activate
 - pip3 install -r requirements.txt
 
-## Create database
+### Create database
 
 - mysql -u root
 - create database bankdb
 
-## Flask shell
+### Flask shell
 
 - export FLASK_APP=app
 - flask shell
@@ -26,11 +26,11 @@
 
 </pre>
 
-## Launch flask server and make it available on all interfaces.
+### Launch flask server and make it available on all interfaces.
 
 - flask run --host=0.0.0.0 --port 5001
 
-## Generate test data
+### Generate test data
 
 - Hit the endpoint `/generate_test_data`
 
@@ -38,7 +38,7 @@
 
 {"sucess": true}
 
-## Verify tables created in db with test data
+### Verify tables created in db with test data
 
 - use bankdb;
 - show tables;
@@ -46,7 +46,7 @@
 - describe bank_accounts;
 
 
-## Test endpoints 
+### Test endpoints 
 
 1. Customer Login
 <pre>
@@ -151,7 +151,7 @@ curl "localhost:5001/account/1/transactions?min_amount=35&max_amount=75" | jq .
   }
 ]
 
-# Response contains Transactions within the inclusive range (min_amount, max_amount)
+### Response contains Transactions within the inclusive range (min_amount, max_amount)
 </pre>
 Filter by date :
 <pre>
@@ -184,7 +184,7 @@ curl "localhost:5001/account/2/transactions?min_date=2023/12/21&max_date=2023/12
   }
 ]
 
-# Response contains Transations within the range (min_date, max_date-1)
+### Response contains Transations within the range (min_date, max_date-1)
 
 </pre>
 
@@ -218,13 +218,13 @@ curl -H "Content-Type: application/json" -X POST localhost:5001/transfer -d '{"f
   "to_account_balance": 145.438
 }
 
-## Check db records. A transaction entry will be logged for transfer to each account.
+### Check db records. A transaction entry will be logged for transfer to each account.
 
 `select * from transactions;`
 
 <pre>
-| 20 |      50 | debit            | Deposit to Acc: Checking-1489  | 2024-01-08 15:45:18 |          87.693 |          3 |
-| 21 |      50 | credit           | Deposit from Acc: Savings-2720 | 2024-01-08 15:45:18 |         145.438 |          4 |
+| 20 |      50 | debit            | Deposit to Acc. Checking-1489  | 2024-01-08 15:45:18 |          87.693 |          3 |
+| 21 |      50 | credit           | Deposit from Acc. Savings-2720 | 2024-01-08 15:45:18 |         145.438 |          4 |
 +----+---------+------------------+--------------------------------+---------------------+-----------------+------------+
 </pre>
 
