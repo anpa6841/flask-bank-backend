@@ -28,7 +28,19 @@
 
 ### Launch flask server and make it available on all interfaces.
 
-- flask run --host=0.0.0.0 --port 5001
+- flask run --host=0.0.0.0 --port 5001 (to run over http)
+
+To configure https on flask server
+
+- Update the openssl.cnf file with your flask server's ip address
+
+- Create a self-signed certificate
+
+    - openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout private_key.pem -out cert.pem -extensions v3_req -config openssl.cnf
+
+- flask run --host=[IP Address] --port 5001 --cert=[cert.pem] --key=[private_key.pem]
+
+- Copy the cert.pem to the /app/src/main/res/raw/ folder in the Android Project
 
 ### Generate test data
 
