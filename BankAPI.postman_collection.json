@@ -1,0 +1,659 @@
+{
+	"info": {
+		"_postman_id": "3e472757-c578-4681-b6d3-09f608c79940",
+		"name": "BankAPI",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Login",
+			"item": [
+				{
+					"name": "Valid Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Successful Login\", function () {",
+									"    response = pm.response.json()",
+									"    ",
+									"    pm.expect(response['id']).to.eql(1);",
+									"    pm.expect(response['name']).to.eql('John Mayo');",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"sa-1\",\n    \"password\": \"sa-1\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Invalid User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Invalid User\", function () {",
+									"    response = pm.response.json()",
+									"    pm.expect(response['error']).to.eql('User not found');",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"lin\",\n    \"password\": \"password\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Invalid Password",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Invalid Password\", function () {",
+									"    response = pm.response.json()",
+									"    pm.expect(response['error']).to.eql('Invalid Credentials');",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"sa-1\",\n    \"password\": \"password\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"login"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Accounts",
+			"item": [
+				{
+					"name": "Get Customer Accounts",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Validate Customer Accounts\", function () {",
+									"    var accounts = pm.response.json();",
+									"",
+									"    var expected_account_types = ['checking', 'savings'];",
+									"",
+									"    for(var i=0; i < 2; i++) {",
+									"        pm.expect(accounts[i]['account_type']).to.eql(expected_account_types[i]);",
+									"        pm.expect(accounts[i].account_number.length).to.eql(10);",
+									"    }",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/customer/{{customer_id}}/accounts",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"customer",
+								"{{customer_id}}",
+								"accounts"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Transactions",
+			"item": [
+				{
+					"name": "Get Account Transactions",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Validate Account Transactions\", function () {",
+									"    var transactions = pm.response.json();",
+									"",
+									"    var expected_transaction_type = ['debit', 'credit'];",
+									"    var expected_transaction_desc = ['Online Purchase', 'Grocery Shopping', 'Utility Bill Payment', 'Withdrawal',",
+									"                                    'Salary Deposit', 'Refund', 'Bonus', 'Initial Balance'];",
+									"",
+									"    for(var i=0; i < transactions.length; i++) {",
+									"        // Skip check for transfer transaction",
+									"        if (transactions[i]['desc'].includes('Deposit to Acc') || transactions[i]['desc'].includes('Deposit from Acc.'))",
+									"        {",
+									"            continue;",
+									"        }",
+									"",
+									"        pm.expect(transactions[i].type).to.be.oneOf(expected_transaction_type);",
+									"        pm.expect(transactions[i].desc).to.be.oneOf(expected_transaction_desc);",
+									"    }",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/account/{{account_id}}/transactions",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"account",
+								"{{account_id}}",
+								"transactions"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Filter Transactions By Date",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Validate Filter Transactions By Date\", function () {",
+									"    var min_date_arg = pm.request.url.query.get('min_date');",
+									"    var max_date_arg = pm.request.url.query.get('max_date');",
+									"",
+									"    var transactions = pm.response.json();",
+									"",
+									"    var min_date = Date.parse(min_date_arg);",
+									"    var max_date = Date.parse(max_date_arg);",
+									"",
+									"    for(var i=0; i < transactions.length; i++) {",
+									"        var transaction_date = Date.parse(transactions[i].timestamp);",
+									"",
+									"        pm.expect(transaction_date).to.be.above(min_date);",
+									"        pm.expect(transaction_date).to.be.below(max_date);",
+									"",
+									"    }",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/account/{{account_id}}/transactions?min_date=2023/12/26&max_date=2023/12/31",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"account",
+								"{{account_id}}",
+								"transactions"
+							],
+							"query": [
+								{
+									"key": "min_date",
+									"value": "2023/12/26"
+								},
+								{
+									"key": "max_date",
+									"value": "2023/12/31"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Filter Transactions By Amount",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Validate Filter Transactions By Amount\", function () {",
+									"    var min_amount = parseFloat(pm.request.url.query.get('min_amount'));",
+									"    var max_amount = parseFloat(pm.request.url.query.get('max_amount'));",
+									"",
+									"    var transactions = pm.response.json();",
+									"",
+									"    for(var i=0; i < transactions.length; i++) {",
+									"        var transaction_amount = transactions[i].amount;",
+									"        ",
+									"        pm.expect(transaction_amount).to.be.above(min_amount);",
+									"        pm.expect(transaction_amount).to.be.below(max_amount);",
+									"",
+									"    }",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/account/{{account_id}}/transactions?min_amount=20&max_amount=45",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"account",
+								"{{account_id}}",
+								"transactions"
+							],
+							"query": [
+								{
+									"key": "min_amount",
+									"value": "20"
+								},
+								{
+									"key": "max_amount",
+									"value": "45"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Filter Transactions By Keyword",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Validate Filter Transactions By Keyword\", function () {",
+									"    var keyword = pm.request.url.query.get('keyword');",
+									"    var transactions = pm.response.json();",
+									"",
+									"    for(var i=0; i < transactions.length; i++) {",
+									"        var transaction_desc = transactions[i].desc;",
+									"        pm.expect(transaction_desc.toLowerCase()).to.include(keyword.toLowerCase());",
+									"",
+									"    }",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/account/{{account_id}}/transactions?keyword=bonus",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"account",
+								"{{account_id}}",
+								"transactions"
+							],
+							"query": [
+								{
+									"key": "keyword",
+									"value": "bonus"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Transfer",
+			"item": [
+				{
+					"name": "Account Info",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"response = pm.response.json()",
+									"",
+									"from_account_number = response[0].account_number;",
+									"from_account_balance = response[0].account_balance;",
+									"to_account_number = response[1].account_number;",
+									"to_account_balance = response[1].account_balance;",
+									"",
+									"pm.variables.set('fromAccNo', from_account_number);",
+									"pm.variables.set('toAccNo', to_account_number);",
+									"pm.variables.set('fromAccBal', from_account_balance);",
+									"pm.variables.set('toAccBal', to_account_balance);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/customer/{{customer_id}}/accounts",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"customer",
+								"{{customer_id}}",
+								"accounts"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Successful Transfer",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Validate Successful Transfer\", function () {",
+									"    var response = pm.response.json();",
+									"    var from_account_balance = pm.variables.get('fromAccBal');",
+									"    var to_account_balance = pm.variables.get('toAccBal');",
+									"",
+									"    pm.expect(response['message']).to.eql(\"Transfer successful\");",
+									"    pm.expect(response['from_account_balance']).to.eql(from_account_balance - 10);",
+									"    pm.expect(response['to_account_balance']).to.eql(to_account_balance + 10);",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"var from_account_number = pm.variables.get('fromAccNo');",
+									"var to_account_number = pm.variables.get('toAccNo');",
+									"",
+									"reqBody = {",
+									"    'from_account_number': from_account_number,",
+									"    'to_account_number': to_account_number,",
+									"    'amount': 10",
+									"}",
+									"",
+									"pm.variables.set('reqBody', JSON.stringify(reqBody));"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{{reqBody}}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/transfer",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"transfer"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Transfer with Invalid Account",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Validate Transfer failed with invalid account\", function () {",
+									"    var response = pm.response.json();",
+									"",
+									"    pm.expect(response['message']).to.eql(\"One or both accounts not found\");",
+									"",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"var from_account_number = pm.variables.get('fromAccNo');",
+									"",
+									"reqBody = {",
+									"    'from_account_number': from_account_number,",
+									"    'to_account_number': \"34763476\",",
+									"    'amount': 10000",
+									"}",
+									"",
+									"pm.variables.set('reqBody', JSON.stringify(reqBody));"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{{reqBody}}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/transfer",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"transfer"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Transfer with Insufficient Funds",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Validate Transfer failed with insufficient amount\", function () {",
+									"    var response = pm.response.json();",
+									"    pm.expect(response['message']).to.eql(\"Insufficient funds for transfer\");",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"var from_account_number = pm.variables.get('fromAccNo');",
+									"var to_account_number = pm.variables.get('toAccNo');",
+									"",
+									"reqBody = {",
+									"    'from_account_number': from_account_number,",
+									"    'to_account_number': to_account_number,",
+									"    'amount': 10000",
+									"}",
+									"",
+									"pm.variables.set('reqBody', JSON.stringify(reqBody));"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{{reqBody}}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/transfer",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"transfer"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"pm.test(\"Status code is 200\", function () {",
+					"    pm.response.to.have.status(200);",
+					"});",
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": ""
+		},
+		{
+			"key": "customer_id",
+			"value": ""
+		},
+		{
+			"key": "account_id",
+			"value": ""
+		}
+	]
+}

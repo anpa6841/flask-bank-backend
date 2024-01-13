@@ -58,6 +58,23 @@ To configure https on flask server
 - describe bank_accounts;
 
 
+### Run API Tests
+
+- Set the variables is in the BankAPI.postman_collection.json
+
+    - base_url - https://Flask IP:Port
+    - customer_id
+    - account_id
+
+- Install Newman
+
+    - npm install -g newman
+
+- Run the collection
+
+    - newman run BankAPI.postman_collection.json --insecure
+
+
 ### Test endpoints 
 
 1. Customer Login
