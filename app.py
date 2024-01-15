@@ -103,16 +103,14 @@ def get_transactions(account_id):
     # Get optional query parameters for filtering
     min_amount = request.args.get('min_amount', type=float)
     max_amount = request.args.get('max_amount', type=float)
-
     min_date = request.args.get('min_date', type=lambda x: datetime.strptime(x, '%Y/%m/%d'))
     max_date = request.args.get('max_date', type=lambda x: datetime.strptime(x, '%Y/%m/%d'))
-
-
     keyword = request.args.get('keyword', type=str)
-
-    account = BankAccount.query.get(account_id)
+    page = request.args.get('page', type=int)
 
     filtered_transactions = []
+
+    account = BankAccount.query.get(account_id)
 
     if not account:
         return jsonify({'message': 'Account not found'})
@@ -138,7 +136,12 @@ def get_transactions(account_id):
             )
     ]
 
-    return jsonify(sorted(filtered_transactions, key=lambda t: t['id'], reverse=True))
+    offset = 0
+    items_per_page = 10
+
+    if page: offset = (page - 1) * items_per_page
+
+    return jsonify(sorted(filtered_transactions[offset:offset + items_per_page], key=lambda t: t['id'], reverse=True))
 
 
 @app.route('/transfer', methods=['POST'])
@@ -236,7 +239,7 @@ def generate_test_data():
             db.session.add(transaction)
 
             # Generate random transactions
-            for idx in range(5):
+            for idx in range(50):
                 amount = random.uniform(1, 100)
 
                 transaction_type = list(transaction_type_desc.keys())[random.randint(0, 1)]
