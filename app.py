@@ -141,7 +141,9 @@ def get_transactions(account_id):
 
     if page: offset = (page - 1) * items_per_page
 
-    return jsonify(sorted(filtered_transactions[offset:offset + items_per_page], key=lambda t: t['id'], reverse=True))
+    filtered_transactions = sorted(filtered_transactions, key=lambda t: t['id'], reverse=True)
+
+    return jsonify(filtered_transactions[offset:offset + items_per_page])
 
 
 @app.route('/transfer', methods=['POST'])
@@ -239,7 +241,7 @@ def generate_test_data():
             db.session.add(transaction)
 
             # Generate random transactions
-            for idx in range(50):
+            for idx in range(500):
                 amount = random.uniform(1, 100)
 
                 transaction_type = list(transaction_type_desc.keys())[random.randint(0, 1)]
