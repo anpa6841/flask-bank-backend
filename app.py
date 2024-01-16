@@ -136,12 +136,13 @@ def get_transactions(account_id):
             )
     ]
 
+    filtered_transactions = sorted(filtered_transactions, key=lambda t: t['id'], reverse=True)
+
+
     offset = 0
     items_per_page = 10
 
     if page: offset = (page - 1) * items_per_page
-
-    filtered_transactions = sorted(filtered_transactions, key=lambda t: t['id'], reverse=True)
 
     return jsonify(filtered_transactions[offset:offset + items_per_page])
 
