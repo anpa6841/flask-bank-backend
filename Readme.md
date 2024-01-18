@@ -279,6 +279,10 @@ curl -H "Content-Type: application/json" -X POST localhost:5001/transfer -d '{"f
 
 <pre>
 
+# Return results for page 1
 curl -k "https://192.168.0.3:5001/account/1/transactions?keyword=bonus" | jq .[].timestamp
+
+# Return results for page 2
+curl -k "https://192.168.0.3:5001/account/1/transactions?keyword=bonus&page=2" | jq .[].timestamp
 
 </pre>

@@ -63,11 +63,9 @@ def login():
 
         else: 
             if bcrypt.check_password_hash(user.password_hash, password):
-                return jsonify({'id': user.id,'name': user.name})
+                return jsonify({'id': user.id,'name': user.name, 'error': ''})
             else:
-                return jsonify({'error': 'Invalid Credentials', 'customer_id': 0})
-
-    return jsonify({"msg": "login page"})
+                return jsonify({'error': 'Invalid Credentials'})
 
 
 @app.route("/customer/<int:customer_id>/accounts", methods=['GET'])
