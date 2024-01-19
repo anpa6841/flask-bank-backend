@@ -136,7 +136,6 @@ def get_transactions(account_id):
 
     filtered_transactions = sorted(filtered_transactions, key=lambda t: t['id'], reverse=True)
 
-
     offset = 0
     items_per_page = 10
 
@@ -259,17 +258,23 @@ def generate_test_data():
                     account.withdraw(amount, transaction_desc)
 
     # Update time for transactions to past dates for testing purposes
-    transactions = Transaction.query.all()
+    accounts = BankAccount.query.all()
 
-    time_travel = len(transactions)
+    time_travel = 60
 
-    for idx, transaction in enumerate(transactions):
-        timestamp = datetime.now() - timedelta(days=time_travel)
-        transaction.timestamp = timestamp
-        if idx % 2 == 0:
-            time_travel -= 1
+    for idx, account in enumerate(accounts):
+        for t_id, transaction in enumerate(account.transactions):
+            timestamp = datetime.now() - timedelta(days=time_travel)
+            transaction.timestamp = timestamp
 
-    db.session.commit()
+            if (t_id + 1) % 10 == 0:
+                time_travel -= 1
+
+        db.session.commit()
+
+        # reset time_travel
+        time_travel = 60
+
     return jsonify({"success": True})
 
 
