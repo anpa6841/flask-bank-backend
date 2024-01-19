@@ -153,6 +153,9 @@ def transfer_amount():
     to_account_number = data.get('to_account_number')
     amount = float(data.get('amount'))
 
+    if from_account_number == to_account_number:
+        return jsonify({'message': 'Cannot Transfer to Self'})
+
     # Retrieve accounts from the database
     from_account = BankAccount.query.filter_by(account_number=from_account_number).first()
     to_account = BankAccount.query.filter_by(account_number=to_account_number).first()
@@ -172,7 +175,7 @@ def transfer_amount():
     from_transaction = Transaction(
                                 amount=amount,
                                 transaction_type='debit',
-                                transaction_desc=f"Deposit to Acc. {from_account.account_type.capitalize()}-{to_account_number[-4:]}",
+                                transaction_desc=f"Deposit to Acc. {to_account.account_type.capitalize()}-{to_account_number[-4:]}",
                                 current_balance=from_account.balance,
                                 account_id=from_account.id
                                 )
@@ -180,7 +183,7 @@ def transfer_amount():
     to_transaction = Transaction(
                             amount=amount,
                             transaction_type='credit',
-                            transaction_desc=f"Deposit from Acc. {to_account.account_type.capitalize()}-{from_account_number[-4:]}",
+                            transaction_desc=f"Deposit from Acc. {from_account.account_type.capitalize()}-{from_account_number[-4:]}",
                             current_balance=to_account.balance,
                             account_id=to_account.id
                             )
